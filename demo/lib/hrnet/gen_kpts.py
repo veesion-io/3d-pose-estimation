@@ -190,9 +190,6 @@ def postprocessing(outputs, image_information):
 
 
 from ultralytics import YOLO
-import ultralytics
-
-ultralytics.__file__
 
 
 def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
@@ -277,14 +274,21 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
         #     cfg, output.clone().cpu().numpy(), np.asarray(center), np.asarray(scale)
         # )
         # import cv2
+
         # frame = cv2.VideoCapture(
         #     "/home/veesion/979aa0bd-b413-42de-aa63-a19a510a05ef.mp4"
         # ).read()[1]
         # output = pose_model.track(frame, persist=True)
+        # output = pose_model.predict(frame, conf=0.0, iou=0.0)
         # len(output)
         preds = output[0].keypoints.xy
         maxvals = output[0].keypoints.conf
-
+        if np.any(preds == 0.0):
+            raise ValueError(
+                "Some keypoints are invisible, you should manually edit "
+                "ultralytics/engine/results.py to prevent the 0-setting of low "
+                "confidence keypoints."
+            )
         kpts = np.zeros((num_persons, 17, 2), dtype=np.float32)
         scores = np.zeros((num_persons, 17), dtype=np.float32)
         for i, kpt in enumerate(preds[:num_persons]):
