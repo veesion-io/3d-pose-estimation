@@ -200,13 +200,13 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
     cap = cv2.VideoCapture(video)
     # Loading detector and pose model, initialize sort for track
 
-    human_model = ort.InferenceSession(
-        "heavy_best_yolo.onnx",
-        providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
-    )
+    # human_model = ort.InferenceSession(
+    #     "heavy_best_yolo.onnx",
+    #     providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+    # )
 
-    outname = [i.name for i in human_model.get_outputs()]
-    inname = [i.name for i in human_model.get_inputs()]
+    # outname = [i.name for i in human_model.get_outputs()]
+    # inname = [i.name for i in human_model.get_inputs()]
     pose_model = YOLO("yolo11x-pose.pt")
 
     people_sort = Sort(min_hits=0)
@@ -221,15 +221,17 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
         if not ret:
             continue
 
-        image_information = {"preprocessing": True}
-        image, image_information = preprocessing(frame, [640, 640], image_information)
-        inp = {inname[0]: image}
+        # image_information = {"preprocessing": True}
+        # image, image_information = preprocessing(frame, [640, 640], image_information)
+        # inp = {inname[0]: image}
 
-        detections = human_model.run(outname, inp)[0]
-        outputs = postprocessing(detections, image_information)
-        bboxs, scores = list(
-            map(np.array, zip(*[[x["bbox"], x["score"]] for x in outputs]))
-        )
+        detections = pose_model.track(frame, persist=True)
+        # outputs = postprocessing(detections, image_information)
+        bboxs = output[0].boxes.xyxy.cpu().numpy()
+        scores = output[0].boxes.conf.cpu().numpy()
+        # bboxs, scores = list(
+        #     map(np.array, zip(*[[x["bbox"], x["score"]] for x in outputs]))
+        # )
         if bboxs is None or len(bboxs) == 0:
             print("No person detected!")
             bboxs = bboxs_pre
@@ -273,7 +275,7 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
         # frame = cv2.VideoCapture(
         #     "/home/veesion/979aa0bd-b413-42de-aa63-a19a510a05ef.mp4"
         # ).read()[1]
-        output = pose_model.track(frame, persist=True)
+        # output = pose_model.track(frame, persist=True)
         # len(output)
         preds = output[0].keypoints.xy
         maxvals = output[0].keypoints.conf
