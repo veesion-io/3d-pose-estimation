@@ -5,3 +5,4 @@ wandb
 checkpoint/*.pth.tr
 env/
 *.onnx
+*.pt
