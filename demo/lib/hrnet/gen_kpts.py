@@ -228,7 +228,7 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
         detections = human_model.run(outname, inp)[0]
         outputs = postprocessing(detections, image_information)
         bboxs, scores = zip(*[[x["bbox"], x["score"]] for x in outputs])
-        if bboxs is None or not bboxs.any():
+        if bboxs is None or len(bboxs) == 0:
             print("No person detected!")
             bboxs = bboxs_pre
             scores = scores_pre
