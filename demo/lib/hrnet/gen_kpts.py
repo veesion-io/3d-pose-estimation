@@ -190,6 +190,9 @@ def postprocessing(outputs, image_information):
 
 
 from ultralytics import YOLO
+import ultralytics
+
+ultralytics.__file__
 
 
 def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
@@ -225,7 +228,9 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
         # image, image_information = preprocessing(frame, [640, 640], image_information)
         # inp = {inname[0]: image}
 
-        output = pose_model.track(frame, persist=True, verbose=False)
+        output = pose_model.track(frame, persist=True, verbose=False, conf=0.1)
+        help(pose_model.track)
+
         # outputs = postprocessing(detections, image_information)
         bboxs = output[0].boxes.xyxy.cpu().numpy()
         scores = output[0].boxes.conf.cpu().numpy()
