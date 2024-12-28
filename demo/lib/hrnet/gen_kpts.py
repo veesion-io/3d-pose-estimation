@@ -281,10 +281,10 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
         kpts = np.zeros((num_persons, 17, 2), dtype=np.float32)
         scores = np.zeros((num_persons, 17), dtype=np.float32)
         for i, kpt in enumerate(preds):
-            kpts[i] = kpt
+            kpts[i] = kpt.cpu().numpy()
 
         for i, score in enumerate(maxvals):
-            scores[i] = score.squeeze()
+            scores[i] = score.squeeze().cpu().numpy()
 
         kpts_result.append(kpts)
         scores_result.append(scores)
