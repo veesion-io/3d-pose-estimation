@@ -189,7 +189,10 @@ def postprocessing(outputs, image_information):
     return scaled_output
 
 
-def gen_video_kpts(video, det_dim=416, num_peroson=1, gen_output=False):
+from ultralytics import YOLO
+
+
+def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
     # Updating configuration
     args = parse_args()
     reset_config(args)
@@ -204,7 +207,8 @@ def gen_video_kpts(video, det_dim=416, num_peroson=1, gen_output=False):
 
     outname = [i.name for i in human_model.get_outputs()]
     inname = [i.name for i in human_model.get_inputs()]
-    pose_model = model_load(cfg)
+    pose_model = YOLO("yolo11x-pose.pt")
+
     people_sort = Sort(min_hits=0)
 
     video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -239,7 +243,7 @@ def gen_video_kpts(video, det_dim=416, num_peroson=1, gen_output=False):
         if people_track.shape[0] == 1:
             people_track_ = people_track[-1, :-1].reshape(1, 4)
         elif people_track.shape[0] >= 2:
-            people_track_ = people_track[-num_peroson:, :-1].reshape(num_peroson, 4)
+            people_track_ = people_track[-num_persons:, :-1].reshape(num_persons, 4)
             people_track_ = people_track_[::-1]
         else:
             continue
@@ -249,25 +253,31 @@ def gen_video_kpts(video, det_dim=416, num_peroson=1, gen_output=False):
             bbox = [round(i, 2) for i in list(bbox)]
             track_bboxs.append(bbox)
 
-        with torch.no_grad():
-            # bbox is coordinate location
-            inputs, origin_img, center, scale = PreProcess(
-                frame, track_bboxs, cfg, num_peroson
-            )
+        # with torch.no_grad():
+        # bbox is coordinate location
+        # inputs, origin_img, center, scale = PreProcess(
+        #     frame, track_bboxs, cfg, num_persons
+        # )
 
-            inputs = inputs[:, [2, 1, 0]]
+        # inputs = inputs[:, [2, 1, 0]]
 
-            if torch.cuda.is_available():
-                inputs = inputs.cuda()
-            output = pose_model(inputs)
+        # if torch.cuda.is_available():
+        #     inputs = inputs.cuda()
+        # compute coordinate
+        # preds, maxvals = get_final_preds(
+        #     cfg, output.clone().cpu().numpy(), np.asarray(center), np.asarray(scale)
+        # )
+        # import cv2
+        # frame = cv2.VideoCapture(
+        #     "/home/veesion/979aa0bd-b413-42de-aa63-a19a510a05ef.mp4"
+        # ).read()[1]
+        output = pose_model.track(frame, persist=True)
+        # len(output)
+        preds = output[0].keypoints.xy
+        maxvals = output[0].keypoints.conf
 
-            # compute coordinate
-            preds, maxvals = get_final_preds(
-                cfg, output.clone().cpu().numpy(), np.asarray(center), np.asarray(scale)
-            )
-
-        kpts = np.zeros((num_peroson, 17, 2), dtype=np.float32)
-        scores = np.zeros((num_peroson, 17), dtype=np.float32)
+        kpts = np.zeros((num_persons, 17, 2), dtype=np.float32)
+        scores = np.zeros((num_persons, 17), dtype=np.float32)
         for i, kpt in enumerate(preds):
             kpts[i] = kpt
 
