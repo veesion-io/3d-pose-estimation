@@ -207,7 +207,7 @@ def gen_video_kpts(video, det_dim=416, num_persons=1, gen_output=False):
 
     # outname = [i.name for i in human_model.get_outputs()]
     # inname = [i.name for i in human_model.get_inputs()]
-    pose_model = YOLO("yolo8x-pose.pt")
+    pose_model = YOLO("yolo11x-pose.pt")
 
     people_sort = Sort(min_hits=0)
 
